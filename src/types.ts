@@ -21,4 +21,10 @@ export interface HistoryItem {
   visitCount: number;
 }
 
+export interface CustomSearch {
+  keyword: string;
+  url: string;
+  name: string;
+}
+
 export type SearchResult = Tab | Bookmark | HistoryItem;
