@@ -22,6 +22,8 @@ const App: React.FC<AppProps> = ({ onClose }) => {
   const [sourceLang, setSourceLang] = useState('auto');
 const [targetLang, setTargetLang] = useState('en');
 const [isLoading, setIsLoading] = useState(false);
+const [translateKeyword, setTranslateKeyword] = useState('translate');
+
 
 
 
@@ -29,6 +31,12 @@ const [isLoading, setIsLoading] = useState(false);
     if (inputRef.current) {
       inputRef.current.focus();
     }
+
+    chrome.storage.sync.get({ translateKeyword: 'translate' }, (items) => {
+      if (items.translateKeyword) {
+        setTranslateKeyword(items.translateKeyword);
+      }
+    });
     
     chrome.runtime.sendMessage({ action: "getTabs" }, (response) => {
       if (response && response.tabs) {
@@ -40,9 +48,9 @@ const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     setSelectedItemIndex(0);
     
-    if (query.startsWith('translate ')) {
+    if (query.startsWith(`${translateKeyword} `)) {
       setIsTranslating(true);
-      setTranslationQuery(query.substring(10));
+      setTranslationQuery(query.substring(translateKeyword.length + 1));
     } else {
       setIsTranslating(false);
       
@@ -60,7 +68,7 @@ const [isLoading, setIsLoading] = useState(false);
         setHistory([]);
       }
     }
-  }, [query]);
+  }, [query, translateKeyword]);
 
   useEffect(() => {
     if (isTranslating) {
@@ -183,6 +191,7 @@ const [isLoading, setIsLoading] = useState(false);
         query={query} 
         setQuery={setQuery} 
         inputRef={inputRef} 
+        translateKeyword={translateKeyword}
       />
       
       {isTranslating ? (

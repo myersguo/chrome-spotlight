@@ -7,13 +7,15 @@ interface Settings {
   translateTargetLang: string;
   translateApiKey: string;
   translateService: string;
+  translateKeyword: string;
 }
 
 const defaultSettings: Settings = {
   translateSourceLang: 'auto',
   translateTargetLang: 'en',
   translateApiKey: '',
-  translateService: 'google' // google or googlecloud
+  translateService: 'google', // google or googlecloud
+  translateKeyword: 'translate'  // 默认关键词为 "translate"
 };
 
 const OptionsPage: React.FC = () => {
@@ -110,6 +112,19 @@ const OptionsPage: React.FC = () => {
             <option value="ru">Russian</option>
           </select>
         </div>
+
+        <div className="options-field">
+          <label htmlFor="translateKeyword">Translate Trigger Keyword:</label>
+          <input 
+            type="text" 
+            id="translateKeyword" 
+            name="translateKeyword"
+            value={settings.translateKeyword}
+            onChange={handleInputChange}
+            placeholder="Enter the trigger keyword (e.g. translate)"
+          />
+        </div>
+        
         
         {settings.translateService === 'googlecloud' && (
           <div className="options-field">
