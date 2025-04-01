@@ -40,17 +40,24 @@ Chrome Spotlight is a Spotlight-like search tool for Chrome that allows you to q
 ## File Structure
 
 ```
-chrome-spotlight/
-├── background.js         // Background service worker handling extension events.
-├── contentScript.js      // Injects the Spotlight interface into web pages.
-├── contentStyle.css      // Styles for the Spotlight interface.
-├── icons/
-│   ├── icon16.png        // Icon displayed in Chrome toolbar (16x16).
-│   ├── icon48.png        // Icon displayed in Chrome toolbar (48x48).
-│   └── icon128.png       // Icon displayed in Chrome toolbar (128x128).
-├── index.html            // Main HTML file for the Spotlight interface.
-├── manifest.json         // Extension manifest with configurations and permissions.
-└── options.html          // Options page for extension settings.
+├── package-lock.json
+├── package.json
+├── src
+│   ├── background.ts
+│   ├── components
+│   │   ├── App.tsx
+│   │   ├── ResultItem.tsx
+│   │   ├── ResultList.tsx
+│   │   ├── SearchBar.tsx
+│   │   └── TranslationResult.tsx
+│   ├── contentScript.tsx
+│   ├── contentStyle.css
+│   ├── options.html
+│   ├── options.tsx
+│   ├── optionsStyle.css
+│   └── types.ts
+├── tsconfig.json
+└── webpack.config.js
 ```
 
 ## Contributing
