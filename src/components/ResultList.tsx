@@ -40,6 +40,7 @@ const ResultList: React.FC<ResultListProps> = ({
           item={item}
           isSelected={index === selectedItemIndex}
           onClick={() => onItemSelect(item)}
+          category={selectedCategory} 
         />
       ))}
     </div>
