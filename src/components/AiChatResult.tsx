@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 interface AiChatResultProps {
     query: string;
@@ -25,13 +26,14 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
     const [error, setError] = useState<string | null>(null);
     const [settings, setSettings] = useState<AiChatSettings>({
         aiChatEnabled: false,
-        aiChatProvider: 'gemini',
+        aiChatProvider: 'volcengine',
         aiChatApiUrl: '',
         aiChatApiKey: '',
         aiChatModel: ''
     });
+    const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null); 
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // Extract the query without the keyword
     const extractedQuery = query.substring(keyword.length).trim();
@@ -40,10 +42,10 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
         // Load settings
         chrome.storage.sync.get({
             aiChatEnabled: false,
-            aiChatProvider: 'gemini',
-            aiChatApiUrl: 'https://generativelanguage.googleapis.com/v1beta',
+            aiChatProvider: 'volcengine',
+            aiChatApiUrl: 'https://ark.cn-beijing.volces.com',
             aiChatApiKey: '',
-            aiChatModel: 'gemini-pro'
+            aiChatModel: 'doubao-1-5-lite-32k-250115'
         }, (items) => {
             setSettings(items as AiChatSettings);
         });
@@ -67,7 +69,6 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
                 inputRef.current.focus();
             }
         }, 100);
-        
         return () => clearTimeout(timer);
     }, [loading, settings.aiChatEnabled]);
 
@@ -88,7 +89,7 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            e.stopPropagation(); 
+            e.stopPropagation();
             handleSendMessage(inputValue);
         }
     };
@@ -109,7 +110,6 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
             settings: settings
         }, (response) => {
             setLoading(false);
-
             if (response.error) {
                 setError(response.error);
             } else if (response.message) {
@@ -125,6 +125,17 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
         setMessages([]);
         setInputValue('');
         setError(null);
+    };
+
+    const handleCopyMessage = (content: string, index: number) => {
+        navigator.clipboard.writeText(content).then(() => {
+            setCopiedMessageId(index);
+            setTimeout(() => {
+                setCopiedMessageId(null);
+            }, 3000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
     };
 
     if (!settings.aiChatEnabled) {
@@ -145,7 +156,7 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
         <div className="spotlight-ai-chat">
             <div className="ai-chat-header">
                 <div className="provider-name">
-                    Engine: 
+                    Engine:&nbsp;
                     {settings.aiChatProvider === 'volcengine' && 'Volcengine'}
                     {settings.aiChatProvider === 'gemini' && 'Google Gemini'}
                     {settings.aiChatProvider === 'openai' && 'OpenAI'}
@@ -173,7 +184,64 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
                             className={`ai-chat-message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
                         >
                             <div className="message-bubble">
-                                <div className="message-content">{message.content}</div>
+                                <div className="message-content">
+                                    <ReactMarkdown
+                                        components={{
+                                            code({ node, className, children, ...props }) {
+                                                const match = /language-(\w+)/.exec(className || '');
+                                                return  match ? (
+                                                    <div className="code-block-wrapper">
+                                                        <div className="code-block-header">
+                                                            <span className="code-language">{match[1]}</span>
+                                                            <button
+                                                                className="copy-code-button"
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+                                                                }}
+                                                            >
+                                                                Copy
+                                                            </button>
+                                                        </div>
+                                                        <pre className={`code-block ${className || ''}`}>
+                                                            <code {...props}>{children}</code>
+                                                        </pre>
+                                                    </div>
+                                                ) : (
+                                                    <code className={className} {...props}>
+                                                        {children}
+                                                    </code>
+                                                );
+                                            },
+                                            pre({ node, children, ...props }) {
+                                                return <div className="pre-wrapper" {...props as React.HTMLAttributes<HTMLDivElement>}>{children}</div>;
+                                            }
+                                        }}
+                                    >
+                                        {message.content}
+                                    </ReactMarkdown>
+                                </div>
+
+                                {message.role === 'assistant' && (
+                                    <div className="message-actions">
+                                        <button
+                                            className="copy-message-button"
+                                            onClick={() => handleCopyMessage(message.content, index)}
+                                            title={copiedMessageId === index ? "Copied!" : "Copy message"}
+                                        >
+                                            {copiedMessageId === index ? (
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                            ) : (
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                </svg>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+
                             </div>
                         </div>
                     ))
@@ -202,7 +270,7 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
 
             <div className="ai-chat-input">
                 <input
-                    ref={inputRef} 
+                    ref={inputRef}
                     type="text"
                     value={inputValue}
                     onChange={handleInputChange}

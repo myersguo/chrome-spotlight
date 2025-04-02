@@ -38,7 +38,8 @@ const defaultSettings: Settings = {
   aiChatApiUrl: 'https://ark.cn-beijing.volces.com',
   aiChatApiKey: '',
   aiChatKeyword: 'aichat',
-  aiChatModel: 'doubao-1-5-lite-32k-250115'
+  aiChatModel: 'doubao-1.5-pro-256k-250115' 
+  // eg: deepseek-r1-250120 deepseek-r1-distill-qwen-32b-250120 deepseek-r1-distill-qwen-7b-250120 doubao-1.5-pro-256k-250115
 };
 
 const OptionsPage: React.FC = () => {
@@ -96,8 +97,8 @@ const OptionsPage: React.FC = () => {
         aiModel = 'claude-instant';
         break;
       case 'volcengine':
-        apiUrl = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
-        aiModel = 'doubao-1-5-lite-32k-250115';
+        apiUrl = 'https://ark.cn-beijing.volces.com';
+        aiModel = 'doubao-1.5-pro-256k-250115';
     }
 
     setSettings({
@@ -445,7 +446,7 @@ const OptionsPage: React.FC = () => {
               <div className="options-help-text">
                 <p>API Base URL defaults:</p>
                 <ul>
-                  <li>Volcengine: https://ark.cn-beijing.volces.com/api/v3/chat/completions</li>
+                  <li>Volcengine: https://ark.cn-beijing.volces.com</li>
                   <li>Google Gemini: https://generativelanguage.googleapis.com/v1beta</li>
                   <li>OpenAI: https://api.openai.com/v1</li>
                   <li>Claude: https://api.anthropic.com/v1</li>
