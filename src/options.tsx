@@ -443,15 +443,17 @@ const OptionsPage: React.FC = () => {
                   />
                 </div>
               
-              <div className="options-help-text">
-                <p>API Base URL defaults:</p>
-                <ul>
-                  <li>Volcengine: https://ark.cn-beijing.volces.com</li>
-                  <li>Google Gemini: https://generativelanguage.googleapis.com/v1beta</li>
-                  <li>OpenAI: https://api.openai.com/v1</li>
-                  <li>Claude: https://api.anthropic.com/v1</li>
-                </ul>
-              </div>
+              {settings.aiChatProvider != 'custom' && (<div className="options-help-text">
+                <p>API Key from :
+                {
+                  settings.aiChatProvider === 'volcengine'?  (<a href="https://console.volcengine.com/ark" target='_blank'>https://console.volcengine.com/ark</a>) :
+                  settings.aiChatProvider === 'gemini'?( <a  href="https://aistudio.google.com/app/apikey" target='_blank'>https://aistudio.google.com/app/apikey</a>):
+                  settings.aiChatProvider === 'openai'? (<a href="https://platform.openai.com/account/api-keys" target='_blank'>https://platform.openai.com/account/api-keys</a>):
+                  settings.aiChatProvider === 'claude'? (<a href="https://console.anthropic.com/" target='_blank'>https://console.anthropic.com/</a>): null
+                }
+                </p>
+              
+              </div>) }
             </>
           )}
         </div>
