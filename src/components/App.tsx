@@ -3,6 +3,8 @@ import SearchBar from './SearchBar';
 import ResultList from './ResultList';
 import TranslationResult from './TranslationResult';
 import CustomSearchResult from './CustomSearchResult';
+import AiChatResult from './AiChatResult';
+
 
 import { Tab, Bookmark, HistoryItem, SearchResult } from '../types';
 
@@ -28,6 +30,8 @@ const App: React.FC<AppProps> = ({ onClose }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchEngine, setSearchEngine] = useState<{ keyword: string, url: string, name: string } | null>(null);
   const [customSearches, setCustomSearches] = useState<{ keyword: string, url: string, name: string }[]>([]);
+  const [isAiChatting, setIsAiChatting] = useState(false);
+  const [aiChatKeyword, setAiChatKeyword] = useState('aichat');
 
 
 
@@ -39,12 +43,16 @@ const App: React.FC<AppProps> = ({ onClose }) => {
 
     chrome.storage.sync.get({
       translateKeyword: 'translate',
+      aiChatKeyword: 'aichat',
       customSearches: [
         { keyword: 'search', url: 'https://www.google.com/search?q=%s', name: 'Google' }
       ]
     }, (items) => {
       if (items.translateKeyword) {
         setTranslateKeyword(items.translateKeyword);
+      }
+      if (items.aiChatKeyword) {
+        setAiChatKeyword(items.aiChatKeyword);
       }
       if (items.customSearches) {
         setCustomSearches(items.customSearches);
@@ -64,9 +72,15 @@ const App: React.FC<AppProps> = ({ onClose }) => {
     if (query.startsWith(`${translateKeyword} `)) {
       setIsTranslating(true);
       setIsSearching(false);
+      setIsAiChatting(false);
       setTranslationQuery(query.substring(translateKeyword.length + 1));
+    } else if (query.startsWith(`${aiChatKeyword} `) || query === aiChatKeyword) {
+      setIsTranslating(false);
+      setIsSearching(false);
+      setIsAiChatting(true);
     } else {
       setIsTranslating(false);
+      setIsAiChatting(false);
 
       // Check if query starts with any of the custom search keywords
       const matchedSearch = customSearches.find(search =>
@@ -95,7 +109,7 @@ const App: React.FC<AppProps> = ({ onClose }) => {
         }
       }
     }
-  }, [query, translateKeyword, customSearches]);
+  }, [query, translateKeyword, customSearches, aiChatKeyword]);
 
   useEffect(() => {
     if (isTranslating) {
@@ -155,6 +169,13 @@ const App: React.FC<AppProps> = ({ onClose }) => {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     let results: SearchResult[] = [];
+
+    if (isAiChatting) {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+      return;
+    }
 
     if (selectedCategory === 'tabs') {
       results = tabs;
@@ -219,6 +240,7 @@ const App: React.FC<AppProps> = ({ onClose }) => {
         setQuery={setQuery}
         inputRef={inputRef}
         translateKeyword={translateKeyword}
+        aiChatKeyword={aiChatKeyword} // Pass AI chat keyword to SearchBar
       />
 
       {isTranslating ? (
@@ -228,6 +250,12 @@ const App: React.FC<AppProps> = ({ onClose }) => {
           sourceLang={sourceLang}
           targetLang={targetLang}
           isLoading={isLoading}
+        />
+      ) : isAiChatting ? (
+        // Render AI Chat component
+        <AiChatResult
+          query={query}
+          keyword={aiChatKeyword}
         />
       ) : isSearching && searchEngine ? (
         <CustomSearchResult

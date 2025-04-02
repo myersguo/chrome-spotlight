@@ -15,6 +15,12 @@ interface Settings {
   translateService: string;
   translateKeyword: string;
   customSearches: CustomSearch[];
+  aiChatEnabled: boolean;
+  aiChatProvider: string;
+  aiChatApiUrl: string;
+  aiChatApiKey: string;
+  aiChatKeyword: string;
+  aiChatModel: string;
 }
 
 const defaultSettings: Settings = {
@@ -26,7 +32,13 @@ const defaultSettings: Settings = {
   customSearches: [
     { keyword: 'google', url: 'https://www.google.com/search?q=%s', name: 'Google' },
     { keyword: 'bing', url: 'https://www.bing.com/search?q=%s', name: 'Bing' }
-  ]
+  ],
+  aiChatEnabled: false,
+  aiChatProvider: 'volcengine',  // 'gemini', 'openai', 'claude', 'volcengine', or 'custom'
+  aiChatApiUrl: 'https://ark.cn-beijing.volces.com',
+  aiChatApiKey: '',
+  aiChatKeyword: 'aichat',
+  aiChatModel: 'doubao-1-5-lite-32k-250115'
 };
 
 const OptionsPage: React.FC = () => {
@@ -53,6 +65,46 @@ const OptionsPage: React.FC = () => {
     setSettings({
       ...settings,
       [name]: value
+    });
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setSettings({
+      ...settings,
+      [name]: checked
+    });
+  };
+
+  const handleAiProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const provider = e.target.value;
+    let apiUrl = settings.aiChatApiUrl;
+    let aiModel = settings.aiChatModel;
+    
+    // Set default API URL based on provider
+    switch (provider) {
+      case 'gemini':
+        apiUrl = 'https://generativelanguage.googleapis.com/v1beta';
+        aiModel = 'gemini-pro';
+        break;
+      case 'openai':
+        apiUrl = 'https://api.openai.com/v1';
+        aiModel = 'gpt-3.5-turbo';
+        break;
+      case 'claude':
+        apiUrl = 'https://api.anthropic.com/v1';
+        aiModel = 'claude-instant';
+        break;
+      case 'volcengine':
+        apiUrl = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+        aiModel = 'doubao-1-5-lite-32k-250115';
+    }
+
+    setSettings({
+      ...settings,
+      aiChatProvider: provider,
+      aiChatApiUrl: apiUrl,
+      aiChatModel: aiModel,
     });
   };
 
@@ -125,6 +177,12 @@ const OptionsPage: React.FC = () => {
           onClick={() => setActiveTab('search')}
         >
           Search Engines
+        </button>
+        <button 
+          className={activeTab === 'aichat' ? 'active' : ''} 
+          onClick={() => setActiveTab('aichat')}
+        >
+          AI Chat
         </button>
       </div>
       
@@ -289,6 +347,112 @@ const OptionsPage: React.FC = () => {
             
             <button onClick={addCustomSearch} className="add-button">Add Search Engine</button>
           </div>
+        </div>
+      )}
+
+      {/* New AI Chat tab content */}
+      {activeTab === 'aichat' && (
+        <div className="options-section">
+          <h2>AI Chat Settings</h2>
+          <p className="options-help-text">
+            Configure your AI chat assistant to quickly get answers from the Spotlight.
+          </p>
+          
+          <div className="options-field">
+            <label htmlFor="aiChatEnabled">
+              <input 
+                type="checkbox" 
+                id="aiChatEnabled" 
+                name="aiChatEnabled"
+                checked={settings.aiChatEnabled}
+                onChange={handleCheckboxChange}
+              />
+              Enable AI Chat
+            </label>
+          </div>
+          
+          {settings.aiChatEnabled && (
+            <>
+              <div className="options-field">
+                <label htmlFor="aiChatKeyword">AI Chat Trigger Keyword:</label>
+                <input 
+                  type="text" 
+                  id="aiChatKeyword" 
+                  name="aiChatKeyword"
+                  value={settings.aiChatKeyword}
+                  onChange={handleInputChange}
+                  placeholder="Enter the trigger keyword (e.g. aichat)"
+                />
+              </div>
+              
+              <div className="options-field">
+                <label htmlFor="aiChatProvider">AI Provider:</label>
+                <select 
+                  id="aiChatProvider" 
+                  name="aiChatProvider"
+                  value={settings.aiChatProvider}
+                  onChange={handleAiProviderChange}
+                >
+                  <option value="volcengine">volcengine</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="claude">Anthropic Claude</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              
+              <div className="options-field">
+                <label htmlFor="aiChatApiUrl">API Base URL:</label>
+                <input 
+                  type="text" 
+                  id="aiChatApiUrl" 
+                  name="aiChatApiUrl"
+                  value={settings.aiChatApiUrl}
+                  onChange={handleInputChange}
+                  placeholder="Enter the API base URL"
+                />
+              </div>
+              
+              <div className="options-field">
+                <label htmlFor="aiChatApiKey">API Key:</label>
+                <input 
+                  type="password" 
+                  id="aiChatApiKey" 
+                  name="aiChatApiKey"
+                  value={settings.aiChatApiKey}
+                  onChange={handleInputChange}
+                  placeholder="Enter your API key"
+                />
+              </div>
+              
+                <div className="options-field">
+                  <label htmlFor="aiChatModel">Model:</label>
+                  <input 
+                    type="text" 
+                    id="aiChatModel" 
+                    name="aiChatModel"
+                    value={settings.aiChatModel}
+                    onChange={handleInputChange}
+                    placeholder={
+                      settings.aiChatProvider === 'volcengine'? 'doubao-1-5-lite-32k-250115' :
+                      settings.aiChatProvider === 'gemini' ? 'gemini-pro' :
+                      settings.aiChatProvider === 'openai' ? 'gpt-4' :
+                      settings.aiChatProvider === 'claude' ? 'claude-3-opus-20240229' : ''
+                    }
+                  />
+                </div>
+              
+              <div className="options-help-text">
+                <p>API Base URL defaults:</p>
+                <ul>
+                  <li>Volcengine: https://ark.cn-beijing.volces.com/api/v3/chat/completions</li>
+                  <li>Google Gemini: https://generativelanguage.googleapis.com/v1beta</li>
+                  <li>OpenAI: https://api.openai.com/v1</li>
+                  <li>Claude: https://api.anthropic.com/v1</li>
+                </ul>
+              </div>
+            </>
+          )}
         </div>
       )}
       

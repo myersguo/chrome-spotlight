@@ -48,7 +48,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   
   if (request.action === "translate") {
-    // Get translation settings from storage
     chrome.storage.sync.get({
       translateSourceLang: 'auto',
       translateTargetLang: 'en',
@@ -60,7 +59,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const text = request.text;
       
       if (settings.translateService === 'google') {
-        // Use Google Translate free API
         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`)
           .then(response => response.json())
           .then(data => {
@@ -129,6 +127,179 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ success: true });
     return true;
   }
+
+  if (request.action === "aiChat") {
+    const { messages, settings } = request;
+    
+    if (!settings.aiChatEnabled || !settings.aiChatApiKey) {
+      sendResponse({ error: "AI Chat is not properly configured" });
+      return true;
+    }
+    
+    let apiUrl, requestBody, headers;
+    
+    // Configure request based on provider
+    switch (settings.aiChatProvider) {
+      case 'gemini':
+        apiUrl = `${settings.aiChatApiUrl}/models/${settings.aiChatModel}:generateContent?key=${settings.aiChatApiKey}`;
+        
+        const geminiMessages = messages.map((msg: any) => ({
+          role: msg.role === 'assistant' ? 'model' : msg.role,
+          parts: [{ text: msg.content }]
+        }));
+        
+        requestBody = JSON.stringify({
+          contents: geminiMessages,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024
+          }
+        });
+        
+        headers = {
+          'Content-Type': 'application/json'
+        };
+        break;
+        
+      case 'openai':
+        apiUrl = `${settings.aiChatApiUrl}/chat/completions`;
+        
+        requestBody = JSON.stringify({
+          model: settings.aiChatModel,
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 1024
+        });
+        
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.aiChatApiKey}`
+        };
+        break;
+        
+      case 'claude':
+        apiUrl = `${settings.aiChatApiUrl}/messages`;
+        
+        const systemMessage = messages.find((msg: any) => msg.role === 'system');
+        const userAssistantMessages = messages.filter((msg: any) => msg.role !== 'system');
+        
+        requestBody = JSON.stringify({
+          model: settings.aiChatModel,
+          messages: userAssistantMessages,
+          system: systemMessage?.content || undefined,
+          temperature: 0.7,
+          max_tokens: 1024
+        });
+        
+        headers = {
+          'Content-Type': 'application/json',
+          'x-api-key': settings.aiChatApiKey,
+          'anthropic-dangerous-direct-browser-access': 'true',
+        };
+        break;
+      case 'volcengine':
+        apiUrl = `${settings.aiChatApiUrl}/api/v3/chat/completions`
+        requestBody = JSON.stringify({
+          messages: messages,
+          model: settings.aiChatModel,
+        });
+        
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.aiChatApiKey}`
+        };
+        break;
+      case 'custom':
+        apiUrl = settings.aiChatApiUrl;
+        
+        requestBody = JSON.stringify({
+          messages: messages,
+          model: settings.aiChatModel,
+          temperature: 0.7,
+          max_tokens: 1024
+        });
+        
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.aiChatApiKey}`
+        };
+        break;
+        
+      default:
+        sendResponse({ error: "Unknown AI provider" });
+        return true;
+    }
+    
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: headers,
+      body: requestBody
+    })
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => {
+            throw new Error(`API error (${response.status}): ${text}`);
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        let responseContent = '';
+        
+        switch (settings.aiChatProvider) {
+          case 'gemini':
+            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+              responseContent = data.candidates[0].content.parts[0].text;
+            }
+            break;
+            
+          case 'openai':
+            if (data.choices && data.choices[0] && data.choices[0].message) {
+              responseContent = data.choices[0].message.content;
+            }
+            break;
+            
+          case 'claude':
+            if (data.content && data.content[0] && data.content[0].text) {
+              responseContent = data.content[0].text;
+            }
+            break;
+          case 'custom':
+          case 'volcengine':
+            if (data.choices && data.choices[0] && data.choices[0].message) {
+              responseContent = data.choices[0].message.content; 
+            } else if (data.response) {
+              responseContent = data.response; 
+            } else if (data.content) {
+              responseContent = typeof data.content === 'string' ? data.content : JSON.stringify(data.content);
+            } else {
+              responseContent = "Received a response but couldn't parse it. Please check the custom API format.";
+            }
+            break;
+        }
+        
+        if (responseContent) {
+          sendResponse({
+            message: {
+              role: 'assistant',
+              content: responseContent
+            }
+          });
+        } else {
+          sendResponse({ 
+            error: "Received an empty or invalid response from the AI provider" 
+          });
+        }
+      })
+      .catch(error => {
+        console.error("AI Chat error:", error);
+        sendResponse({ error: error.message });
+      });
+      
+    return true;
+  }
+
+
 });
 
 chrome.commands.onCommand.addListener((command) => {
