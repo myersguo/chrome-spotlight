@@ -4,6 +4,9 @@ import ResultList from './ResultList';
 import TranslationResult from './TranslationResult';
 import CustomSearchResult from './CustomSearchResult';
 import AiChatResult from './AiChatResult';
+import ExpressionResult from './ExpressionResult';
+import { Parser } from 'expr-eval';
+
 
 
 import { Tab, Bookmark, HistoryItem, SearchResult } from '../types';
@@ -32,6 +35,8 @@ const App: React.FC<AppProps> = ({ onClose }) => {
   const [customSearches, setCustomSearches] = useState<{ keyword: string, url: string, name: string }[]>([]);
   const [isAiChatting, setIsAiChatting] = useState(false);
   const [aiChatKeyword, setAiChatKeyword] = useState('aichat');
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [expressionResult, setExpressionResult] = useState('');
 
 
 
@@ -66,21 +71,59 @@ const App: React.FC<AppProps> = ({ onClose }) => {
     });
   }, []);
 
+  const evaluateExpression = (expr: string): string => {
+    try {
+      return Parser.evaluate(expr).toString();
+    } catch (e) {
+      throw new Error('Calculation error');
+    }
+  };
+
+  const isValidMathExpression = (expr: string): boolean => {
+    const hasValidChars = /^[\d\s+\-*/().^%]+$/.test(expr);
+    const hasAtLeastOneOperator = /[+\-*/^%]/.test(expr);
+    const startsWithValidChar = /^[\d(]/.test(expr);
+    const endsWithValidChar = !/[+\-*/^%]$/.test(expr);
+    const hasMatchingBrackets = expr.split('(').length === expr.split(')').length;
+    const hasNoConsecutiveOperators = !/[+\-*/^%]{2,}/.test(expr);
+    return hasValidChars && hasAtLeastOneOperator && startsWithValidChar && endsWithValidChar && hasMatchingBrackets && hasNoConsecutiveOperators;
+  }
+
   useEffect(() => {
     setSelectedItemIndex(0);
+
 
     if (query.startsWith(`${translateKeyword} `)) {
       setIsTranslating(true);
       setIsSearching(false);
       setIsAiChatting(false);
       setTranslationQuery(query.substring(translateKeyword.length + 1));
+      setIsCalculating(false);
+      setExpressionResult('');
     } else if (query.startsWith(`${aiChatKeyword} `) || query === aiChatKeyword) {
       setIsTranslating(false);
       setIsSearching(false);
       setIsAiChatting(true);
-    } else {
+      setIsCalculating(false);
+      setExpressionResult('');
+    } else if (isValidMathExpression(query)) {
+      try {
+        const result = evaluateExpression(query);
+        setIsCalculating(true);
+        setIsTranslating(false);
+        setIsAiChatting(false);
+        setIsSearching(false);
+        setExpressionResult(result);
+      } catch (e) {
+        console.error(e);
+        setIsCalculating(false);
+      }
+    }
+    else {
       setIsTranslating(false);
       setIsAiChatting(false);
+      setIsCalculating(false);
+      setExpressionResult('');
 
       // Check if query starts with any of the custom search keywords
       const matchedSearch = customSearches.find(search =>
@@ -243,7 +286,13 @@ const App: React.FC<AppProps> = ({ onClose }) => {
         aiChatKeyword={aiChatKeyword} // Pass AI chat keyword to SearchBar
       />
 
-      {isTranslating ? (
+
+      {isCalculating ? (
+        <ExpressionResult
+          expression={query}
+          result={expressionResult}
+        />
+      ) : isTranslating ? (
         <TranslationResult
           query={translationQuery}
           result={translationResult}

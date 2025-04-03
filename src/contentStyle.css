@@ -672,3 +672,52 @@
 .copy-message-button svg {
   display: block;
 }
+
+/* expression styles */
+
+.spotlight-expression {
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.expression-result-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.copy-container {
+  position: relative;
+}
+
+.copy-button {
+  background: #f0f0f0;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.copy-button:hover {
+  background: #e0e0e0;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: black;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.3s;
+}
