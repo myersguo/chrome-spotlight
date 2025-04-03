@@ -16,14 +16,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
-  
+
   if (request.action === "getBookmarks") {
     chrome.bookmarks.search(request.query, (bookmarks) => {
       sendResponse({ bookmarks });
     });
     return true;
   }
-  
+
   if (request.action === "getHistory") {
     chrome.history.search({
       text: request.query,
@@ -33,20 +33,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
-  
+
   if (request.action === "openTab") {
     chrome.tabs.update(request.tabId, { active: true });
     chrome.windows.update(request.windowId, { focused: true });
     sendResponse({ success: true });
     return true;
   }
-  
+
   if (request.action === "openUrl") {
     chrome.tabs.create({ url: request.url });
     sendResponse({ success: true });
     return true;
   }
-  
+
   if (request.action === "translate") {
     chrome.storage.sync.get({
       translateSourceLang: 'auto',
@@ -57,13 +57,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const sourceLang = request.sourceLang || settings.translateSourceLang;
       const targetLang = request.targetLang || settings.translateTargetLang;
       const text = request.text;
-      
+
       if (settings.translateService === 'google') {
         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`)
           .then(response => response.json())
           .then(data => {
             const translation = data[0][0][0];
-            sendResponse({ 
+            sendResponse({
               translation,
               sourceLang,
               targetLang
@@ -75,7 +75,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       } else if (settings.translateService === 'googlecloud' && settings.translateApiKey) {
         // Use Google Cloud Translation API
         const url = `https://translation.googleapis.com/language/translate/v2?key=${settings.translateApiKey}`;
-        
+
         fetch(url, {
           method: 'POST',
           headers: {
@@ -92,7 +92,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (data.error) {
               sendResponse({ error: data.error.message || "Translation error" });
             } else if (data.data && data.data.translations && data.data.translations.length > 0) {
-              sendResponse({ 
+              sendResponse({
                 translation: data.data.translations[0].translatedText,
                 sourceLang: data.data.translations[0].detectedSourceLanguage || sourceLang,
                 targetLang
@@ -110,7 +110,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
-  
+
   if (request.action === "getTranslationSettings") {
     chrome.storage.sync.get({
       translateSourceLang: 'auto',
@@ -130,24 +130,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === "aiChat") {
     const { messages, settings } = request;
-    
+
     if (!settings.aiChatEnabled || !settings.aiChatApiKey) {
       sendResponse({ error: "AI Chat is not properly configured" });
       return true;
     }
-    
+
     let apiUrl, requestBody, headers;
-    
+
     // Configure request based on provider
     switch (settings.aiChatProvider) {
       case 'gemini':
         apiUrl = `${settings.aiChatApiUrl}/models/${settings.aiChatModel}:generateContent?key=${settings.aiChatApiKey}`;
-        
+
         const geminiMessages = messages.map((msg: any) => ({
           role: msg.role === 'assistant' ? 'model' : msg.role,
           parts: [{ text: msg.content }]
         }));
-        
+
         requestBody = JSON.stringify({
           contents: geminiMessages,
           generationConfig: {
@@ -155,34 +155,34 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             maxOutputTokens: 1024
           }
         });
-        
+
         headers = {
           'Content-Type': 'application/json'
         };
         break;
-        
+
       case 'openai':
         apiUrl = `${settings.aiChatApiUrl}/chat/completions`;
-        
+
         requestBody = JSON.stringify({
           model: settings.aiChatModel,
           messages: messages,
           temperature: 0.7,
           max_tokens: 1024
         });
-        
+
         headers = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${settings.aiChatApiKey}`
         };
         break;
-        
+
       case 'claude':
         apiUrl = `${settings.aiChatApiUrl}/messages`;
-        
+
         const systemMessage = messages.find((msg: any) => msg.role === 'system');
         const userAssistantMessages = messages.filter((msg: any) => msg.role !== 'system');
-        
+
         requestBody = JSON.stringify({
           model: settings.aiChatModel,
           messages: userAssistantMessages,
@@ -190,7 +190,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           temperature: 0.7,
           max_tokens: 1024
         });
-        
+
         headers = {
           'Content-Type': 'application/json',
           'x-api-key': settings.aiChatApiKey,
@@ -203,7 +203,31 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           messages: messages,
           model: settings.aiChatModel,
         });
-        
+
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.aiChatApiKey}`
+        };
+        break;
+      case 'huggingface':
+        apiUrl = `${settings.aiChatApiUrl}/${settings.aiChatModel}`;
+
+        const prompt = messages.map((msg: any) => {
+          const role = msg.role === 'user' ? 'User' :
+            msg.role === 'assistant' ? 'Assistant' :
+              'System';
+          return `<|${role}|>: ${msg.content}`;
+        }).join('\n');
+
+        requestBody = JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            temperature: 0.7,
+            max_new_tokens: 1024,
+            return_full_text: false
+          }
+        });
+
         headers = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${settings.aiChatApiKey}`
@@ -211,25 +235,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         break;
       case 'custom':
         apiUrl = settings.aiChatApiUrl;
-        
+
         requestBody = JSON.stringify({
           messages: messages,
           model: settings.aiChatModel,
           temperature: 0.7,
           max_tokens: 1024
         });
-        
+
         headers = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${settings.aiChatApiKey}`
         };
         break;
-        
+
       default:
         sendResponse({ error: "Unknown AI provider" });
         return true;
     }
-    
+
     fetch(apiUrl, {
       method: 'POST',
       headers: headers,
@@ -245,31 +269,45 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       })
       .then(data => {
         let responseContent = '';
-        
+
         switch (settings.aiChatProvider) {
           case 'gemini':
             if (data.candidates && data.candidates[0] && data.candidates[0].content) {
               responseContent = data.candidates[0].content.parts[0].text;
             }
             break;
-            
+
           case 'openai':
             if (data.choices && data.choices[0] && data.choices[0].message) {
               responseContent = data.choices[0].message.content;
             }
             break;
-            
+
           case 'claude':
             if (data.content && data.content[0] && data.content[0].text) {
               responseContent = data.content[0].text;
             }
             break;
+          case 'huggingface':
+              if (data?.[0]?.generated_text) {
+                responseContent = data[0].generated_text;
+                const regex = /<\|Bot\|>:(.*?)(?=<\|User\|>:|$)/g;
+                let match;
+                let lastMatch = null;
+                while ((match = regex.exec(responseContent)) !== null) {
+                  lastMatch = match[1];
+                }
+                if (lastMatch) {
+                  responseContent = lastMatch.trim();
+                }
+              }
+              break;
           case 'custom':
           case 'volcengine':
             if (data.choices && data.choices[0] && data.choices[0].message) {
-              responseContent = data.choices[0].message.content; 
+              responseContent = data.choices[0].message.content;
             } else if (data.response) {
-              responseContent = data.response; 
+              responseContent = data.response;
             } else if (data.content) {
               responseContent = typeof data.content === 'string' ? data.content : JSON.stringify(data.content);
             } else {
@@ -277,7 +315,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
             break;
         }
-        
+
         if (responseContent) {
           sendResponse({
             message: {
@@ -286,8 +324,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
           });
         } else {
-          sendResponse({ 
-            error: "Received an empty or invalid response from the AI provider" 
+          sendResponse({
+            error: "Received an empty or invalid response from the AI provider"
           });
         }
       })
@@ -295,7 +333,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.error("AI Chat error:", error);
         sendResponse({ error: error.message });
       });
-      
+
     return true;
   }
 
