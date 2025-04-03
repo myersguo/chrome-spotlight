@@ -257,7 +257,7 @@ const App: React.FC<AppProps> = ({ onClose }) => {
   };
 
   const handleItemSelect = (item: SearchResult) => {
-    if ('tabId' in item) {
+    if ('windowId' in item) {
       chrome.runtime.sendMessage({
         action: "openTab",
         tabId: item.id,
