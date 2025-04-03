@@ -22,7 +22,7 @@ const ExpressionResult: React.FC<ExpressionResultProps> = ({ expression, result 
           <button className="copy-button" onClick={handleCopy}>
             📋
           </button>
-          {showTooltip && <div className="tooltip">复制</div>}
+          {showTooltip && <div className="tooltip">Copied</div>}
         </div>
       </div>
     </div>
