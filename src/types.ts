@@ -27,4 +27,20 @@ export interface CustomSearch {
   name: string;
 }
 
+
+export interface Settings {
+  translateSourceLang: string;
+  translateTargetLang: string;
+  translateApiKey: string;
+  translateService: string;
+  translateKeyword: string;
+  customSearches: CustomSearch[];
+  aiChatEnabled: boolean;
+  aiChatProvider: string;
+  aiChatApiUrl: string;
+  aiChatApiKey: string;
+  aiChatKeyword: string;
+  aiChatModel: string;
+}
+
 export type SearchResult = Tab | Bookmark | HistoryItem;

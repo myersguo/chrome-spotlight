@@ -123,7 +123,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   if (request.action === "openOptionsPage") {
     const optionsPageUrl = chrome.runtime.getURL('options.html');
-    chrome.tabs.create({ url: optionsPageUrl });
+    chrome.tabs.query({ url: optionsPageUrl }, (tabs) => {
+      if (tabs.length > 0) {
+        chrome.tabs.update(tabs[0].id!, { active: true });
+        chrome.windows.update(tabs[0].windowId!, { focused: true });
+      } else {
+        chrome.tabs.create({ url: optionsPageUrl });
+      }
+    });
     sendResponse({ success: true });
     return true;
   }

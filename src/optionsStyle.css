@@ -207,3 +207,20 @@ body {
   .add-button:hover {
     background-color: #1765cc;
   }
+
+
+  .password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .password-input-container input {
+    flex: 1;
+  }
+  
+  .password-toggle-icon {
+    cursor: pointer;
+    padding: 0 8px;
+    user-select: none;
+  }
