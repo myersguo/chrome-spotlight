@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Spotlight",
+  "name": "Chrome Spotlight-Tabs, Bookmarks, History and More",
   "version": "1.0.1",
   "description": "A Spotlight-like search tool for Chrome",
   "permissions": [

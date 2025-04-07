@@ -62,7 +62,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`)
           .then(response => response.json())
           .then(data => {
-            const translation = data[0][0][0];
+            const translation = data[0].map((item: any) => item[0]).join('\n');
             sendResponse({
               translation,
               sourceLang,
@@ -92,8 +92,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (data.error) {
               sendResponse({ error: data.error.message || "Translation error" });
             } else if (data.data && data.data.translations && data.data.translations.length > 0) {
+              const translation = data.data.translations.map((t: any) => t.translatedText).join('\n');
               sendResponse({
-                translation: data.data.translations[0].translatedText,
+                translation,
                 sourceLang: data.data.translations[0].detectedSourceLanguage || sourceLang,
                 targetLang
               });

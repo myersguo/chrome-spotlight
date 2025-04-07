@@ -16,12 +16,12 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
   targetLang = 'en',
   isLoading = false
 }) => {
-  const [availableLanguages, setAvailableLanguages] = useState<{ [key: string]: string }>({});
-
   const [selectedSourceLang, setSelectedSourceLang] = useState(sourceLang);
   const [selectedTargetLang, setSelectedTargetLang] = useState(targetLang);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationText, setTranslationText] = useState(result);
+  const [editedQuery, setEditedQuery] = useState(query);
+
 
   useEffect(() => {
     chrome.runtime.sendMessage({ action: "getTranslationSettings" }, (settings) => {
@@ -36,6 +36,10 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
     setTranslationText(result);
   }, [result]);
 
+  useEffect(() => {
+    setEditedQuery(query);
+  }, [query]);
+
   const handleLanguageChange = (type: 'source' | 'target', value: string) => {
     if (type === 'source') {
       setSelectedSourceLang(value);
@@ -46,7 +50,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
     setIsTranslating(true);
     chrome.runtime.sendMessage({
       action: "translate",
-      text: query,
+      text: editedQuery,
       sourceLang: type === 'source' ? value : selectedSourceLang,
       targetLang: type === 'target' ? value : selectedTargetLang
     }, (response) => {
@@ -59,8 +63,44 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
     });
   };
 
+  const handleTranslate = () => {
+    setIsTranslating(true);
+    chrome.runtime.sendMessage({
+      action: "translate",
+      text: editedQuery,
+      sourceLang: selectedSourceLang,
+      targetLang: selectedTargetLang
+    }, (response) => {
+      if (response && response.translation) {
+        setTranslationText(response.translation);
+      } else if (response && response.error) {
+        setTranslationText(`Error: ${response.error}`);
+      }
+      setIsTranslating(false);
+    });
+  };
+
   return (
     <div className="spotlight-translation">
+
+      <div className="translation-edit">
+        <textarea
+          value={editedQuery}
+          onChange={(e) => setEditedQuery(e.target.value)}
+          className="translation-edit-textarea"
+          placeholder="Edit text to translate..."
+          rows={3}
+        />
+        <button
+          onClick={handleTranslate}
+          className="translation-confirm-button"
+          disabled={isTranslating}
+        >
+          Translate
+        </button>
+      </div>
+
+
       <div className="translation-language-selectors">
         <div className="language-selector">
           <label>From:</label>
@@ -93,7 +133,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
       <div className="translation-content">
         <div className="translation-original">
           <div className="translation-label">Original:</div>
-          <div className="translation-text">{query}</div>
+          <div className="translation-text">{editedQuery}</div>
         </div>
 
         <div className="translation-result">
