@@ -9,11 +9,12 @@ import {
   providerDefaults,
   SOURCE_LANGUAGE_OPTIONS,
   TARGET_LANGUAGE_OPTIONS,
+  DEFAULT_TIMEZONE_REGIONS,
 } from './constants';
 
 import {
   Settings,
-  CustomSearch
+  CustomSearch,
 } from './types';
 
 
@@ -28,7 +29,10 @@ interface TabButtonProps {
 const TabButton: React.FC<TabButtonProps> = ({ name, activeTab, label, onClick }) => (
   <button
     className={activeTab === name ? 'active' : ''}
-    onClick={() => onClick(name)}
+    onClick={() => {
+      onClick(name);
+      window.location.hash = name;
+    }}
   >
     {label}
   </button>
@@ -63,6 +67,14 @@ const OptionsPage: React.FC = () => {
     chrome.storage.sync.get(defaultSettings, (items) => {
       setSettings(items as Settings);
     });
+  }, []);
+
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    // @ts-ignore
+    if (hash && Object.values(TABS).includes(hash)) {
+      setActiveTab(hash);
+    }
   }, []);
 
 
@@ -212,8 +224,8 @@ const OptionsPage: React.FC = () => {
           onChange={handleInputChange}
         >
           {SOURCE_LANGUAGE_OPTIONS.map(lang => (
-          <option key={lang.value} value={lang.value}>{lang.label}</option>
-        ))}
+            <option key={lang.value} value={lang.value}>{lang.label}</option>
+          ))}
         </select>
       </div>
 
@@ -226,8 +238,8 @@ const OptionsPage: React.FC = () => {
           onChange={handleInputChange}
         >
           {TARGET_LANGUAGE_OPTIONS.map(lang => (
-          <option key={lang.value} value={lang.value}>{lang.label}</option>
-        ))}
+            <option key={lang.value} value={lang.value}>{lang.label}</option>
+          ))}
         </select>
       </div>
 
@@ -449,6 +461,159 @@ const OptionsPage: React.FC = () => {
     </div>
   );
 
+  const [newTimeZone, setNewTimeZone] = useState({
+    id: '',
+    name: '',
+    region: 'Americas',
+    offset: 0
+  });
+
+  const handleNewTimeZoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    // id: newTimeZoneId, newTimeZoneName, newTimeZoneRegion, newTimeZoneOffset
+    let fieldValue = value;
+    setNewTimeZone({
+      ...newTimeZone,
+      [id.replace('newTimeZone', '').toLowerCase()]: fieldValue
+    });
+  };
+
+  const addTimeZone = () => {
+    const { id, name, region, offset } = newTimeZone;
+
+    if (!id || !name) {
+      showStatus('Please provide an ID and name for the time zone');
+      return;
+    }
+
+    if (settings.timeZones.some(tz => tz.id === id)) {
+      showStatus('A time zone with this ID already exists');
+      return;
+    }
+
+    setSettings({
+      ...settings,
+      timeZones: [...settings.timeZones, { id, name, region, offset }]
+    });
+
+    setNewTimeZone({
+      id: '',
+      name: '',
+      region: 'Americas',
+      offset: 0
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const removeTimeZone = (id: string) => {
+    setSettings({
+      ...settings,
+      timeZones: settings.timeZones.filter(tz => tz.id !== id)
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const renderTimeTab = () => {
+
+
+    return (
+      <div className="options-section">
+        <h2>World Clock Settings</h2>
+
+        <div className="options-field">
+          <label htmlFor="timeKeyword">Time Trigger Keyword:</label>
+          <input
+            type="text"
+            id="timeKeyword"
+            name="timeKeyword"
+            value={settings.timeKeyword}
+            onChange={handleInputChange}
+            placeholder="Enter the trigger keyword (e.g. time)"
+          />
+        </div>
+
+        <h3>Configured Time Zones</h3>
+        <div className="time-zones-list">
+          {settings.timeZones.map((timeZone, index) => (
+            <div key={index} className="custom-search-item">
+              <div className="custom-search-info">
+                <span className="custom-search-name">{timeZone.name}</span>
+                <span className="custom-search-keyword">{timeZone.region}</span>
+                <span className="custom-search-url">UTC{timeZone.offset >= 0 ? '+' : ''}{timeZone.offset}</span>
+              </div>
+              <button
+                className="remove-button"
+                onClick={() => removeTimeZone(timeZone.id)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="add-custom-search">
+          <h3>Add New Time Zone</h3>
+          <div className="custom-search-inputs">
+            <div className="options-field">
+              <label htmlFor="newTimeZoneId">ID:</label>
+              <input
+                type="text"
+                id="newTimeZoneId"
+                value={newTimeZone.id}
+                onChange={handleNewTimeZoneChange}
+                placeholder="new_york, los_angeles, etc."
+              />
+            </div>
+
+            <div className="options-field">
+              <label htmlFor="newTimeZoneName">Name:</label>
+              <input
+                type="text"
+                id="newTimeZoneName"
+                value={newTimeZone.name}
+                onChange={handleNewTimeZoneChange}
+                placeholder="New York, Los Angeles, etc."
+              />
+            </div>
+
+            <div className="options-field">
+              <label htmlFor="newTimeZoneRegion">Region:</label>
+              <select
+                id="newTimeZoneRegion"
+                value={newTimeZone.region}
+                onChange={handleNewTimeZoneChange}
+              >
+                {DEFAULT_TIMEZONE_REGIONS.map( (region: string) => {
+                  return (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
+
+            <div className="options-field">
+              <label htmlFor="newTimeZoneOffset">UTC Offset:</label>
+              <input
+                type="number"
+                id="newTimeZoneOffset"
+                value={newTimeZone.offset}
+                onChange={handleNewTimeZoneChange}
+                step="0.5"
+                min="-12"
+                max="14"
+              />
+            </div>
+          </div>
+
+          <button onClick={addTimeZone} className="add-button">Add Time Zone</button>
+        </div>
+      </div>
+    );
+  };
+
+
   return (
     <div className="options-container">
       <h1>Chrome Spotlight Settings</h1>
@@ -472,20 +637,28 @@ const OptionsPage: React.FC = () => {
           label="AI Chat"
           onClick={setActiveTab}
         />
+        <TabButton
+          name={TABS.TIME}
+          activeTab={activeTab}
+          label="World Clock"
+          onClick={setActiveTab}
+        />
       </div>
 
       {activeTab === TABS.TRANSLATION && renderTranslationTab()}
       {activeTab === TABS.SEARCH && renderSearchTab()}
       {activeTab === TABS.AI_CHAT && renderAiChatTab()}
+      {activeTab === TABS.TIME && renderTimeTab()}
+
 
       <div className="options-buttons">
         <button onClick={saveSettings} className="save-button">
-        {hasUnsavedChanges ? 'Save Settings*' : 'Settings Saved'}
-          </button>
+          {hasUnsavedChanges ? 'Save Settings*' : 'Settings Saved'}
+        </button>
         <button onClick={resetSettings} className="reset-button">Reset to Defaults</button>
       </div>
 
-      <StatusMessage message={status} />
+      <StatusMessage message={hasUnsavedChanges ? 'You have unsaved changes' : status} />
     </div>
   );
 };

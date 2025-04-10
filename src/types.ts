@@ -27,6 +27,12 @@ export interface CustomSearch {
   name: string;
 }
 
+export interface TimeZone {
+  id: string;
+  name: string;
+  region: string;
+  offset: number;
+}
 
 export interface Settings {
   translateSourceLang: string;
@@ -41,6 +47,8 @@ export interface Settings {
   aiChatApiKey: string;
   aiChatKeyword: string;
   aiChatModel: string;
+  timeKeyword: string;
+  timeZones: TimeZone[];
 }
 
 export type SearchResult = Tab | Bookmark | HistoryItem;

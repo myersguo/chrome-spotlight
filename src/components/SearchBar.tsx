@@ -5,7 +5,8 @@ interface SearchBarProps {
   setQuery: (query: string) => void;
   inputRef: React.RefObject<HTMLInputElement>;
   translateKeyword: string;
-  aiChatKeyword: string; // Add AI chat keyword
+  aiChatKeyword: string;
+  timeKeyword: string; 
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ 
@@ -13,7 +14,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   setQuery, 
   inputRef, 
   translateKeyword,
-  aiChatKeyword // Add AI chat keyword
+  aiChatKeyword,
+  timeKeyword,
 }) => {
   return (
     <div className="spotlight-search">
@@ -22,7 +24,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder={`Search tabs, bookmarks, history or type '${translateKeyword}' to translate or '${aiChatKeyword}' to chat with AI...`}
+        placeholder={`Search tabs, bookmarks, history or type '${translateKeyword}' to translate, '${aiChatKeyword}' for AI chat, '${timeKeyword}' for world clock...`}
         autoFocus
       />
     </div>

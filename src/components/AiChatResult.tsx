@@ -144,7 +144,7 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
                 <p>AI Chat is disabled. Please enable it in the options page.</p>
                 <button
                     className="search-action-button"
-                    onClick={() => chrome.runtime.sendMessage({ action: "openOptionsPage" })}
+                    onClick={() => chrome.runtime.sendMessage({ action: "openOptionsPage", hash: 'aiChat' })}
                 >
                     Open Settings
                 </button>
@@ -292,7 +292,7 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
                     href="#"
                     onClick={(e) => {
                         e.preventDefault();
-                        chrome.runtime.sendMessage({ action: "openOptionsPage" });
+                        chrome.runtime.sendMessage({ action: "openOptionsPage", hash: 'aichat' });
                     }}
                 >
                     AI Chat Settings

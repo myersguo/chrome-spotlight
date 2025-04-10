@@ -5,6 +5,7 @@ const TABS = {
   TRANSLATION: 'translation',
   SEARCH: 'search',
   AI_CHAT: 'aichat',
+  TIME: 'time',
 } as const;
 
 const AI_PROVIDERS = {
@@ -37,8 +38,25 @@ const defaultSettings: Settings = {
   aiChatApiUrl: 'https://ark.cn-beijing.volces.com',
   aiChatApiKey: '',
   aiChatKeyword: 'aichat',
-  aiChatModel: 'doubao-1.5-pro-256k-250115'
+  aiChatModel: 'doubao-1.5-pro-256k-250115',
+  timeKeyword: 'time',
+  timeZones: [
+    { id: 'shanghai', name: 'Shanghai', region: 'Asia', offset: 8 },
+    { id: 'singapore', name: 'Singapore', region: 'Asia', offset: 8 },
+    { id: 'tokyo', name: 'Tokyo', region: 'Asia', offset: 9 },
+    { id: 'new_york', name: 'New York', region: 'Americas', offset: -4 },
+    { id: 'los_angeles', name: 'Los Angeles', region: 'Americas', offset: -7 },
+    { id: 'london', name: 'London', region: 'Europe', offset: 1 },
+    { id: 'paris', name: 'Paris', region: 'Europe', offset: 2 },
+    // others
+    { id: 'sydney', name: 'Sydney', region: 'Others', offset: 10 },
+    { id: 'brazil', name: 'Brazil', region: 'Others', offset: -3 },
+  ]
 };
+
+const DEFAULT_TIMEZONE_REGIONS = defaultSettings.timeZones.map(tz => tz.region).filter((region, index, self) =>
+  index === self.indexOf(region)
+);
 
 const providerDefaults: Record<string, {
   apiUrl: string;
@@ -128,6 +146,7 @@ export {
   providerDefaults,
   TRANSLATION_LANGUAGES,
   SOURCE_LANGUAGE_OPTIONS,
-  TARGET_LANGUAGE_OPTIONS
+  TARGET_LANGUAGE_OPTIONS,
+  DEFAULT_TIMEZONE_REGIONS,
 }
 

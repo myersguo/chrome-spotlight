@@ -545,19 +545,19 @@
   margin-top: 40px;
 }
 
-.ai-chat-footer {
+.ai-chat-footer,.spotlight-footer {
   padding: 8px 16px;
   font-size: 12px;
   text-align: right;
   border-top: 1px solid #eee;
 }
 
-.ai-chat-footer a {
+.ai-chat-footer, .spotlight-footer a {
   color: #1a73e8;
   text-decoration: none;
 }
 
-.ai-chat-footer a:hover {
+.ai-chat-footer, .spotlight-footer a:hover {
   text-decoration: underline;
 }
 
@@ -770,4 +770,69 @@
   white-space: nowrap;
   opacity: 1;
   transition: opacity 0.3s;
+}
+
+
+
+.spotlight-time-world {
+  padding: 16px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.time-world-title {
+  text-align: center;
+  margin-bottom: 16px;
+  color: #1a73e8;
+}
+
+.time-region {
+  margin-bottom: 20px;
+}
+
+.region-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.time-zone-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.time-zone-item {
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.time-zone-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.time-zone-name {
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.time-zone-time {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #1a73e8;
+}
+
+.time-zone-date {
+  font-size: 12px;
+  color: #777;
 }

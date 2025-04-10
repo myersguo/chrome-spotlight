@@ -6,6 +6,9 @@ import CustomSearchResult from './CustomSearchResult';
 import AiChatResult from './AiChatResult';
 import ExpressionResult from './ExpressionResult';
 import { Parser } from 'expr-eval';
+import TimeWorldResult from './TimeWorldResult';
+import { defaultSettings } from '../constants';
+
 
 
 
@@ -37,6 +40,10 @@ const App: React.FC<AppProps> = ({ onClose }) => {
   const [aiChatKeyword, setAiChatKeyword] = useState('aichat');
   const [isCalculating, setIsCalculating] = useState(false);
   const [expressionResult, setExpressionResult] = useState('');
+  const [isShowingTime, setIsShowingTime] = useState(false);
+  const [timeKeyword, setTimeKeyword] = useState('time');
+  const [timeZones, setTimeZones] = useState<{ id: string, name: string, region: string, offset: number }[]>([]);
+
 
 
 
@@ -47,11 +54,13 @@ const App: React.FC<AppProps> = ({ onClose }) => {
     }
 
     chrome.storage.sync.get({
-      translateKeyword: 'translate',
-      aiChatKeyword: 'aichat',
+      translateKeyword: defaultSettings.translateKeyword,
+      aiChatKeyword: defaultSettings.aiChatKeyword,
       customSearches: [
         { keyword: 'search', url: 'https://www.google.com/search?q=%s', name: 'Google' }
-      ]
+      ],
+      timeKeyword: defaultSettings.timeKeyword,
+      timeZones: defaultSettings.timeZones,
     }, (items) => {
       if (items.translateKeyword) {
         setTranslateKeyword(items.translateKeyword);
@@ -61,6 +70,12 @@ const App: React.FC<AppProps> = ({ onClose }) => {
       }
       if (items.customSearches) {
         setCustomSearches(items.customSearches);
+      }
+      if (items.timeKeyword) {
+        setTimeKeyword(items.timeKeyword);
+      }
+      if (items.timeZones) {
+        setTimeZones(items.timeZones);
       }
     });
 
@@ -91,68 +106,76 @@ const App: React.FC<AppProps> = ({ onClose }) => {
 
   useEffect(() => {
     setSelectedItemIndex(0);
+    setIsShowingTime(false);
 
-
-    if (query.startsWith(`${translateKeyword} `)) {
-      setIsTranslating(true);
-      setIsSearching(false);
-      setIsAiChatting(false);
-      setTranslationQuery(query.substring(translateKeyword.length + 1));
-      setIsCalculating(false);
-      setExpressionResult('');
-    } else if (query.startsWith(`${aiChatKeyword} `) || query === aiChatKeyword) {
+    if (query === timeKeyword) {
+      setIsShowingTime(true);
       setIsTranslating(false);
       setIsSearching(false);
-      setIsAiChatting(true);
+      setIsAiChatting(false);
       setIsCalculating(false);
       setExpressionResult('');
-    } else if (isValidMathExpression(query)) {
-      try {
-        const result = evaluateExpression(query);
-        setIsCalculating(true);
-        setIsTranslating(false);
+    } else
+      if (query.startsWith(`${translateKeyword} `)) {
+        setIsTranslating(true);
+        setIsSearching(false);
         setIsAiChatting(false);
-        setIsSearching(false);
-        setExpressionResult(result);
-      } catch (e) {
-        console.error(e);
+        setTranslationQuery(query.substring(translateKeyword.length + 1));
         setIsCalculating(false);
-      }
-    }
-    else {
-      setIsTranslating(false);
-      setIsAiChatting(false);
-      setIsCalculating(false);
-      setExpressionResult('');
-
-      // Check if query starts with any of the custom search keywords
-      const matchedSearch = customSearches.find(search =>
-        query.startsWith(`${search.keyword} `) && query.length > search.keyword.length + 1
-      );
-
-      if (matchedSearch) {
-        setIsSearching(true);
-        setSearchEngine(matchedSearch);
-      } else {
+        setExpressionResult('');
+      } else if (query.startsWith(`${aiChatKeyword} `) || query === aiChatKeyword) {
+        setIsTranslating(false);
         setIsSearching(false);
-        setSearchEngine(null);
-
-        if (query.trim() !== '') {
-          searchTabs();
-          searchBookmarks();
-          searchHistory();
-        } else {
-          chrome.runtime.sendMessage({ action: "getTabs" }, (response) => {
-            if (response && response.tabs) {
-              setTabs(response.tabs);
-            }
-          });
-          setBookmarks([]);
-          setHistory([]);
+        setIsAiChatting(true);
+        setIsCalculating(false);
+        setExpressionResult('');
+      } else if (isValidMathExpression(query)) {
+        try {
+          const result = evaluateExpression(query);
+          setIsCalculating(true);
+          setIsTranslating(false);
+          setIsAiChatting(false);
+          setIsSearching(false);
+          setExpressionResult(result);
+        } catch (e) {
+          console.error(e);
+          setIsCalculating(false);
         }
       }
-    }
-  }, [query, translateKeyword, customSearches, aiChatKeyword]);
+      else {
+        setIsTranslating(false);
+        setIsAiChatting(false);
+        setIsCalculating(false);
+        setExpressionResult('');
+
+        // Check if query starts with any of the custom search keywords
+        const matchedSearch = customSearches.find(search =>
+          query.startsWith(`${search.keyword} `) && query.length > search.keyword.length + 1
+        );
+
+        if (matchedSearch) {
+          setIsSearching(true);
+          setSearchEngine(matchedSearch);
+        } else {
+          setIsSearching(false);
+          setSearchEngine(null);
+
+          if (query.trim() !== '') {
+            searchTabs();
+            searchBookmarks();
+            searchHistory();
+          } else {
+            chrome.runtime.sendMessage({ action: "getTabs" }, (response) => {
+              if (response && response.tabs) {
+                setTabs(response.tabs);
+              }
+            });
+            setBookmarks([]);
+            setHistory([]);
+          }
+        }
+      }
+  }, [query, translateKeyword, customSearches, aiChatKeyword, timeKeyword]);
 
   useEffect(() => {
     if (isTranslating) {
@@ -284,10 +307,12 @@ const App: React.FC<AppProps> = ({ onClose }) => {
         inputRef={inputRef}
         translateKeyword={translateKeyword}
         aiChatKeyword={aiChatKeyword} // Pass AI chat keyword to SearchBar
+        timeKeyword={timeKeyword}
       />
 
-
-      {isCalculating ? (
+      {isShowingTime ? (
+        <TimeWorldResult timeZones={timeZones} />
+      ) : isCalculating ? (
         <ExpressionResult
           expression={query}
           result={expressionResult}

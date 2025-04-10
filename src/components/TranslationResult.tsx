@@ -149,7 +149,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            chrome.runtime.sendMessage({ action: "openOptionsPage" });
+            chrome.runtime.sendMessage({ action: "openOptionsPage", hash: 'translation' });
           }}
         >
           Translation Settings
