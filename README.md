@@ -9,6 +9,10 @@ Chrome Spotlight is a Spotlight-like search tool for Chrome that allows you to q
 - **Keyboard Shortcut:** Easily toggle the Spotlight interface using `Ctrl+K` (or `Command+K` on macOS).
 - **Seamless Integration:** Works across all websites with a content script that injects the search interface.
 - **Customizable Options:** Configure settings via an options page.
+- Type `translate [text]` to get instant translations without leaving your current tab
+- Use `time` to check the current time in different time zones (great for remote teams!)
+- Type `aichat` to start chatting with AI models like OpenAI or Gemini directly in the popup
+➗ Run quick math operations like `10+100*4` right from the search bar
 
 ## Installation
 
