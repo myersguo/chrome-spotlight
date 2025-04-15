@@ -9,10 +9,8 @@ import { Parser } from 'expr-eval';
 import TimeWorldResult from './TimeWorldResult';
 import { defaultSettings } from '../constants';
 
-
-
-
 import { Tab, Bookmark, HistoryItem, SearchResult } from '../types';
+import { fuzzyMatch } from '../utils';
 
 interface AppProps {
   onClose: () => void;
@@ -209,8 +207,8 @@ const App: React.FC<AppProps> = ({ onClose }) => {
     chrome.runtime.sendMessage({ action: "getTabs" }, (response) => {
       if (response && response.tabs) {
         const filteredTabs = response.tabs.filter((tab: Tab) =>
-          tab.title.toLowerCase().includes(query.toLowerCase()) ||
-          tab.url.toLowerCase().includes(query.toLowerCase())
+           fuzzyMatch(query, tab.title)
+          || fuzzyMatch(query, tab.url)
         );
         setTabs(filteredTabs);
       }

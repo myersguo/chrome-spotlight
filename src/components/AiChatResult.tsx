@@ -189,7 +189,7 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
                                         components={{
                                             code({ node, className, children, ...props }) {
                                                 const match = /language-(\w+)/.exec(className || '');
-                                                return  match ? (
+                                                return match ? (
                                                     <div className="code-block-wrapper">
                                                         <div className="code-block-header">
                                                             <span className="code-language">{match[1]}</span>
@@ -214,6 +214,24 @@ const AiChatResult: React.FC<AiChatResultProps> = ({ query, keyword }) => {
                                             },
                                             pre({ node, children, ...props }) {
                                                 return <div className="pre-wrapper" {...props as React.HTMLAttributes<HTMLDivElement>}>{children}</div>;
+                                            },
+                                            table({ node, children, ...props }) {
+                                                return <div className="table-wrapper"><table className="markdown-table" {...props}>{children}</table></div>;
+                                            },
+                                            thead({ node, children, ...props }) {
+                                                return <thead className="markdown-thead" {...props}>{children}</thead>;
+                                            },
+                                            tbody({ node, children, ...props }) {
+                                                return <tbody className="markdown-tbody" {...props}>{children}</tbody>;
+                                            },
+                                            tr({ node, children, ...props }) {
+                                                return <tr className="markdown-tr" {...props}>{children}</tr>;
+                                            },
+                                            th({ node, children, ...props }) {
+                                                return <th className="markdown-th" {...props}>{children}</th>;
+                                            },
+                                            td({ node, children, ...props }) {
+                                                return <td className="markdown-td" {...props}>{children}</td>;
                                             }
                                         }}
                                     >

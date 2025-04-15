@@ -38,6 +38,12 @@ const TimeWorldResult: React.FC<TimeWorldResultProps> = ({ timeZones }) => {
         const tzDate = new Date(utc + offset * 3600 * 1000);
         return tzDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
     };
+    const isWorkTime = (date: Date, offset: number) => {
+        const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const tzDate = new Date(utc + offset * 3600 * 1000);
+        const hour = tzDate.getHours();
+        return hour >= 9 && hour <= 18;
+    };
 
     return (
         <div className="spotlight-time-world">
@@ -49,7 +55,10 @@ const TimeWorldResult: React.FC<TimeWorldResultProps> = ({ timeZones }) => {
                             {zones.map((zone: TimeZone) => (
                                 <div key={zone.id} className="time-zone-item">
                                     <div className="time-zone-name">{zone.name}</div>
-                                    <div className="time-zone-time">{formatTime(currentTime, zone.offset)}</div>
+                                    <div className="time-zone-date">{formatDate(currentTime, zone.offset)}</div>
+                                    <div className={`time-zone-time ${isWorkTime(currentTime, zone.offset) ? 'work-time' : 'rest-time'}`}>
+                                        {formatTime(currentTime, zone.offset)}
+                                    </div>
                                     <div className="time-zone-date">{formatDate(currentTime, zone.offset)}</div>
                                 </div>
                             ))}

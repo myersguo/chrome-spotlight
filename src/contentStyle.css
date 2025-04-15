@@ -622,14 +622,33 @@
   color: #24292e;
 }
 
-.message-content code {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  border-radius: 3px;
-  padding: 0.2em 0.4em;
-  font-size: 85%;
-  color: inherit;
-  background: none;
+.table-wrapper {
+  overflow-x: auto;
+  margin: 1rem 0;
 }
+
+.markdown-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0;
+  border: 1px solid #e0e0e0;
+}
+
+.markdown-th, .markdown-td {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+.markdown-th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+.markdown-tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
 
 .user-message .message-content code {
   background-color: rgba(255, 255, 255, 0.15);
@@ -835,4 +854,8 @@
 .time-zone-date {
   font-size: 12px;
   color: #777;
+}
+
+.time-zone-time.rest-time {
+  color: red;
 }
