@@ -27,7 +27,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getHistory") {
     chrome.history.search({
       text: request.query,
-      maxResults: 20
+      // Search across the full local history instead of Chrome's default 24h window.
+      startTime: 0,
+      maxResults: 100
     }, (historyItems) => {
       sendResponse({ historyItems });
     });
